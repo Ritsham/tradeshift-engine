@@ -1,0 +1,38 @@
+services:
+  # 1. The Database (TimescaleDB)
+  db:
+    # CHANGED: 'timescaledb/timescaledb' -> 'timescale/timescaledb'
+    image: timescale/timescaledb:latest-pg14
+    container_name: tradeshift_db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=tradeshift
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. The Cache (Redis)
+  redis:
+    image: redis:alpine
+    container_name: tradeshift_redis
+    ports:
+      - "6379:6379"
+
+  # 3. The Backend (FastAPI)
+  backend:
+    build: ./backend
+    container_name: tradeshift_backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/tradeshift
+
+volumes:
+  postgres_data:
